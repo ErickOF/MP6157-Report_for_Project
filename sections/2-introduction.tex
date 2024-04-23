@@ -1,8 +1,10 @@
 \section{Introduction}
 In previous research~\cite{obregon2024lsf}, the significance of the heating or temperature control systems across a range of industries including biology, biotechnology, food supply chain, transportation, automotive, agriculture, buildings, and beyond was examined. During the prior study, the methodology was focused on modeling the heating system and implementing a least-squares filter using Simulink. For this work, the approach is centered on the Kalman filter applied to an Arduino DAQ system for a temperature control system.
 
-
 \subsection{Kalman Filter}
-~\cite{mendel1995lessons}
+Kalman filter anticipates forthcoming system states by analyzing past and present states via prediction and update stages~\cite{kalman1960new}. It is employed to gauge system parameters and diminish noise-induced errors during estimation~\cite{bishop2001introduction}. Ideal for dynamic systems with memory constraints, Kalman Filter is well-suited for real-time and embedded applications~\cite{khodarahmi2023review}. Extended Kalman Filter, tailored for nonlinear systems, often yields superior outcomes compared to conventional techniques~\cite{khodarahmi2023review, lai2021novel}. \\
+
+A recursive mean-squared state filter is called a Kalman filter because it was developed
+by Kalman around 1959~\cite{mendel1995lessons}.
 
 
