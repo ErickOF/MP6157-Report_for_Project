@@ -1,10 +1,101 @@
 \section{Introduction}
-In previous research~\cite{obregon2024lsf}, the significance of the heating or temperature control systems across a range of industries including biology, biotechnology, food supply chain, transportation, automotive, agriculture, buildings, and beyond was examined. During the prior study, the methodology was focused on modeling the heating system and implementing a least-squares filter using Simulink. For this work, the approach is centered on the Kalman filter applied to an Arduino DAQ system for a temperature control system.
+In previous research~\cite{obregon2024lsf}, the significance of the heating or temperature control systems across a range of industries including biology, biotechnology, food supply chain, transportation, automotive, agriculture, buildings, and beyond was examined. During the prior study, the methodology was focused on modeling the heating system and implementing a least-squares filter using Simulink. For this work, the approach is centered on the Kalman filter applied to an Arduino \acrfull{daq} System for a temperature control system.
 
 \subsection{Kalman Filter}
 Kalman filter anticipates forthcoming system states by analyzing past and present states via prediction and update stages~\cite{kalman1960new}. It is employed to gauge system parameters and diminish noise-induced errors during estimation~\cite{bishop2001introduction}. Ideal for dynamic systems with memory constraints, Kalman Filter is well-suited for real-time and embedded applications~\cite{khodarahmi2023review}. Extended Kalman Filter, tailored for nonlinear systems, often yields superior outcomes compared to conventional techniques~\cite{khodarahmi2023review, lai2021novel}. \\
 
 A recursive mean-squared state filter is called a Kalman filter because it was developed
-by Kalman around 1959~\cite{mendel1995lessons}.
+by Kalman around 1959~\cite{mendel1995lessons}. For the estimator, it is considered a linear feedback system for the state and output estimates, as shown in Eq~\ref{eq:seq_state_estimation}~\cite{crassidis2004dynamic}.
 
+\begin{subequations}
+\begin{align}
+    \dot{\hat{x}}(t) = \bar{F}~\hat{x}(t)+K\left[ \tilde{y}(t) - \bar{H}~\hat{x}(t) \right],~~~\hat{x}(t_{0}) = 1 \\
+    \hat{y}(t) = \bar{H}~\hat{x}(t)
+\end{align}
+~\label{eq:seq_state_estimation}
+\end{subequations}
+
+where $\hat{x}(t)$ denotes the estimate of $x(t)$, $K$ is a constant gain, and $\bar{H} = H = 1$. \\
+
+The process of deriving the discrete-time Kalman filter commences under the assumption that both the model and measurements exist in discrete-time format. Considering a scenario where the initial state condition $x_{0}$ is uncertain, as in Eq~\ref{eq:seq_state_estimation}. Furthermore, it is assumed that both the discrete-time model and measurements are corrupted by noise ~\cite{crassidis2004dynamic}. So the ``truth'' model for this is given by Eq~\ref{eq:truth_model}.
+
+\begin{subequations}
+\begin{align}
+    \textbf{x}(k + 1) = \Phi \textbf{x}(k) + \Gamma \textbf{u}(k) + \Upsilon \textbf{w}(k) \\
+    \tilde{\textbf{y}}(k) = \textbf{\textit{H}} \textbf{x}(k) + \textbf{v}(k)
+\end{align}
+~\label{eq:truth_model}
+\end{subequations}
+
+where $\textbf{v}(k)$ and $\textbf{w}(k)$ are assumed to be zero-mean Gaussian white-noise processes, which means that the errors are not correlated forward or backward in time so that
+
+\begin{equation}
+    E \left\{ \textbf{v}(k) \textbf{v}(j)^{T} \right\} = 
+    \begin{cases}
+        0     & k \neq j \\
+        R_{k} & k = j
+    \end{cases}
+\end{equation}
+,
+
+\begin{equation}
+    E \left\{ \textbf{w}(k) \textbf{w}(j)^{T} \right\} = 
+    \begin{cases}
+        0     & k \neq j \\
+        Q_{k} & k = j
+    \end{cases}
+\end{equation}
+
+and 
+
+\begin{equation}
+    E \left\{ \textbf{v}(k) \textbf{w}(j)^{T} \right\} = 0
+\end{equation}
+
+So the final estimator is given by Eq~\ref{eq:kalman_filter}
+
+\begin{subequations}
+\begin{align}
+    \hat{\textbf{x}}^{-}(k + 1) = \Phi \hat{\textbf{x}}^{+}(k) + \Gamma \textbf{u}(k) \\
+    \hat{\textbf{x}}^{+}(k) = \hat{\textbf{x}}^{-}(k) + K \left[ \tilde{\textbf{y}}(k) - H \hat{\textbf{x}}^{-}(k) \right]
+\end{align}
+~\label{eq:kalman_filter}
+\end{subequations}
+
+with the following stages~\cite{crassidis2004dynamic}: \\
+
+\begin{enumerate}
+    \item Initialize:
+
+\begin{subequations}
+\begin{align}
+    \hat{\textbf{x}}(t_{0}) = \hat{\textbf{x}}_{0} \\
+    P_{0} = E \left\{ \tilde{\textbf{x}}(t_{0}) \tilde{\textbf{x}}(t_{0})^{T} \right\}
+\end{align}
+\end{subequations}
+
+    \item Gain:
+
+\begin{equation}
+    K(k) = P^{-}(k) H^{T}(k) \left[ H(k) P^{-}(k) H^{T}(k) + R(k) \right]^{-1}
+\end{equation}
+
+    \item Update:
+
+\begin{subequations}
+\begin{align}
+    \hat{\textbf{x}}^{+}(k) = \hat{\textbf{x}}^{-}(k) + K(k) \left[ \tilde{\textbf{y}}(k) - H \hat{\textbf{x}}^{-}(k) \right] \\
+    P^{+}(k) = \left[ I - K(k) H(k) \right] P^{-}(k)
+\end{align}
+\end{subequations}
+
+    \item Propagation:
+
+\begin{subequations}
+\begin{align}
+    \hat{\textbf{x}}^{-}(k + 1) = \Phi \hat{\textbf{x}}^{+}(k) + \Gamma \textbf{u}(k) \\
+    P^{-}(k + 1) = \Phi(k) + P^{+}(k) \Phi^{T}(k) + \Upsilon(k) Q(k) \Upsilon^{T}(k)
+\end{align}
+\end{subequations}
+\end{enumerate}
 
